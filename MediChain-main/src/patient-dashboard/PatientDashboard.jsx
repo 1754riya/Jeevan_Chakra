@@ -105,7 +105,7 @@ function Skeleton({ className = '' }) {
 
 /* ─── Quick action button ─── */
 function QuickAction({ icon: Icon, label, to, color, onClick }) {
-  const cls = `flex flex-col items-center gap-2 p-4 rounded-2xl ${color} cursor-pointer hover:scale-105 transition-transform`;
+  const cls = `flex flex-col items-center gap-1.5 p-2 sm:p-4 rounded-2xl ${color} cursor-pointer hover:scale-105 transition-transform min-h-[72px] justify-center`;
   if (to) return (
     <Link to={to} className={cls}>
       <Icon className="w-6 h-6" />
@@ -204,14 +204,14 @@ export default function PatientDashboard() {
         </div>
 
         {/* ── Quick actions ── */}
-        <div className="grid grid-cols-4 sm:grid-cols-4 gap-3 mb-8">
+        <div className="grid grid-cols-4 gap-2 sm:gap-3 mb-8">
           <QuickAction icon={Search}      label="Find Doctors"      onClick={() => navigate('/search')}
             color="bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300" />
           <QuickAction icon={Calendar}    label="Appointments"      to="/appointments"
             color="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300" />
-          <QuickAction icon={FileText}    label="Medical Records"   to="/medical-records"
+          <QuickAction icon={FileText}    label="Records"           to="/medical-records"
             color="bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300" />
-          <QuickAction icon={Brain}       label="AI Assistant"      to="/ai-assistant"
+          <QuickAction icon={Brain}       label="AI Chat"           to="/ai-assistant"
             color="bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300" />
         </div>
 

@@ -501,8 +501,8 @@ export default function App() {
                 </motion.div>
               </div>
 
-              {/* Right — interactive appointment mockup */}
-              <div className="w-full max-w-[360px] lg:max-w-[340px] xl:max-w-[360px] shrink-0 mx-auto lg:mx-0 px-4 lg:px-0">
+              {/* Right — appointment mockup (hidden on small phones to avoid overflow) */}
+              <div className="hidden sm:block w-full max-w-[340px] lg:max-w-[340px] xl:max-w-[360px] shrink-0 mx-auto lg:mx-0 overflow-visible">
                 <AppointmentMockup />
               </div>
             </div>

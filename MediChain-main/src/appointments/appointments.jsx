@@ -104,10 +104,10 @@ function Appointments() {
           {/* Quick Access */}
           <div className="mb-8">
             <p className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-3">Quick Access</p>
-            <div className="grid grid-cols-4 gap-2.5">
+            <div className="flex gap-2.5 overflow-x-auto pb-1 sm:grid sm:grid-cols-4 sm:overflow-visible snap-x snap-mandatory">
               {QUICK_LINKS.map(item => (
                 <Link key={item.to} to={item.to}
-                  className="flex flex-col items-center gap-2 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 py-4 px-2 hover:shadow-md transition-shadow group">
+                  className="flex flex-col items-center gap-2 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 py-4 px-3 hover:shadow-md transition-shadow group shrink-0 w-[80px] sm:w-auto snap-start">
                   <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center group-hover:scale-105 transition-transform`}>
                     <item.icon className="w-5 h-5 text-white" />
                   </div>

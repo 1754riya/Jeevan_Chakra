@@ -129,25 +129,25 @@ export default function Emergency() {
       <div className="max-w-5xl mx-auto px-4 py-8 animate-fade-in">
 
         {/* Hero */}
-        <div className="bg-gradient-to-r from-red-600 to-red-700 rounded-3xl p-8 mb-8 text-white relative overflow-hidden">
+        <div className="bg-gradient-to-r from-red-600 to-red-700 rounded-3xl p-5 sm:p-8 mb-8 text-white relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full translate-x-20 -translate-y-20" />
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full -translate-x-16 translate-y-16" />
           <div className="relative">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
-                <AlertTriangle className="w-7 h-7 text-white" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-2xl flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold">Emergency Help</h1>
-                <p className="text-red-100">Quick access to critical contacts and first aid guidance</p>
+                <h1 className="text-2xl sm:text-3xl font-bold">Emergency Help</h1>
+                <p className="text-red-100 text-sm">Quick access to critical contacts and first aid guidance</p>
               </div>
             </div>
-            <div className="flex flex-wrap gap-3 mt-4">
-              <a href="tel:108" className="flex items-center gap-2 bg-white text-red-700 font-bold px-6 py-3 rounded-2xl hover:bg-red-50 transition-colors">
-                <Phone className="w-5 h-5" /> Call 108 — Ambulance
+            <div className="flex flex-wrap gap-2 sm:gap-3 mt-4">
+              <a href="tel:108" className="flex items-center gap-2 bg-white text-red-700 font-bold px-4 sm:px-6 py-3 rounded-2xl hover:bg-red-50 transition-colors text-sm sm:text-base">
+                <Phone className="w-4 h-4 sm:w-5 sm:h-5" /> Call 108 — Ambulance
               </a>
-              <a href="tel:100" className="flex items-center gap-2 bg-white/20 text-white font-semibold px-6 py-3 rounded-2xl hover:bg-white/30 transition-colors">
-                <Phone className="w-5 h-5" /> Call 100 — Police
+              <a href="tel:100" className="flex items-center gap-2 bg-white/20 text-white font-semibold px-4 sm:px-6 py-3 rounded-2xl hover:bg-white/30 transition-colors text-sm sm:text-base">
+                <Phone className="w-4 h-4 sm:w-5 sm:h-5" /> Call 100 — Police
               </a>
             </div>
           </div>

@@ -220,19 +220,19 @@ export default function BookMedicine() {
       <div className="min-h-screen bg-gray-50 dark:bg-slate-900 pt-16 pb-24 md:pb-8">
 
         {/* Header */}
-        <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-8 px-4">
-          <div className="max-w-6xl mx-auto flex items-center justify-between">
+        <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-6 sm:py-8 px-4">
+          <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h1 className="text-2xl font-bold flex items-center gap-2">
-                <Package className="w-6 h-6" /> Book Medicine
+              <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+                <Package className="w-5 h-5 sm:w-6 sm:h-6" /> Book Medicine
               </h1>
-              <p className="text-emerald-100 text-sm mt-1">Order medicines online · Delivered to your door</p>
+              <p className="text-emerald-100 text-xs sm:text-sm mt-1">Order medicines online · Delivered to your door</p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <div className="flex rounded-xl overflow-hidden border border-white/30">
                 {['shop', 'orders'].map(t => (
                   <button key={t} onClick={() => setTab(t)}
-                    className={`px-4 py-2 text-sm font-medium capitalize transition-colors ${tab === t ? 'bg-white text-emerald-700' : 'text-white hover:bg-white/10'}`}>
+                    className={`px-3 sm:px-4 py-2 text-sm font-medium capitalize transition-colors ${tab === t ? 'bg-white text-emerald-700' : 'text-white hover:bg-white/10'}`}>
                     {t}
                   </button>
                 ))}

@@ -51,7 +51,18 @@ export default function View() {
   const stars = doctor.avgRating ? Math.round(doctor.avgRating) : 0;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 pt-16 pb-24 md:pb-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 pt-16 pb-36 md:pb-8">
+      {/* ── Mobile sticky CTA ── */}
+      <div className="fixed bottom-16 left-0 right-0 z-30 md:hidden bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border-t border-gray-100 dark:border-slate-700 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
+        <button
+          onClick={() => document.getElementById('booking-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+          className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-3.5 rounded-2xl text-sm shadow-lg shadow-blue-300/40 flex items-center justify-center gap-2"
+        >
+          Book Appointment
+          {doctor?.fee > 0 && <span className="bg-white/20 px-2 py-0.5 rounded-full text-xs">₹{doctor.fee.toLocaleString()}</span>}
+        </button>
+      </div>
+
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
@@ -195,7 +206,7 @@ export default function View() {
           </div>
 
           {/* ── Right: Booking ── */}
-          <div className="md:sticky md:top-20 h-fit">
+          <div id="booking-section" className="md:sticky md:top-20 h-fit scroll-mt-20">
             <div className="bg-white dark:bg-slate-800 rounded-3xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden">
               <div className="px-6 py-5 border-b border-gray-100 dark:border-slate-700">
                 <h2 className="font-bold text-gray-900 dark:text-white text-lg">Book Appointment</h2>

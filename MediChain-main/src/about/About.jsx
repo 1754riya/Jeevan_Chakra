@@ -107,20 +107,20 @@ export default function About() {
       <div className="max-w-5xl mx-auto px-4 py-8 animate-fade-in">
 
         {/* Hero */}
-        <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 rounded-3xl p-10 mb-10 text-white relative overflow-hidden">
+        <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 rounded-3xl p-6 sm:p-10 mb-10 text-white relative overflow-hidden">
           <div className="absolute top-0 right-0 w-80 h-80 bg-white/5 rounded-full translate-x-24 -translate-y-24" />
           <div className="absolute bottom-0 left-0 w-60 h-60 bg-white/5 rounded-full -translate-x-16 translate-y-20" />
           <div className="relative">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-lg">
-                <Heart className="w-8 h-8 text-blue-600" />
+              <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white rounded-2xl flex items-center justify-center shadow-lg shrink-0">
+                <Heart className="w-7 h-7 sm:w-8 sm:h-8 text-blue-600" />
               </div>
               <div>
-                <h1 className="text-4xl font-black">Jeevan Chakra</h1>
-                <p className="text-blue-200">Healthcare Platform · Jeevan Chakra Project</p>
+                <h1 className="text-3xl sm:text-4xl font-black">Jeevan Chakra</h1>
+                <p className="text-blue-200 text-sm sm:text-base">Healthcare Platform · Jeevan Chakra Project</p>
               </div>
             </div>
-            <p className="text-lg text-blue-100 max-w-2xl leading-relaxed mb-6">
+            <p className="text-sm sm:text-lg text-blue-100 max-w-2xl leading-relaxed mb-6">
               A full-stack, portfolio-grade healthcare platform connecting patients with doctors.
               Features AI health assistance, real-time appointment management, advanced analytics,
               and a complete patient health records system.

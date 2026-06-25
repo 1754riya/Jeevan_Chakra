@@ -152,9 +152,19 @@ export default function SignupPage() {
   return (
     <div className="min-h-screen flex text-left">
       {/* Left Side — Form */}
-      <div className="w-full lg:w-1/2 p-8 flex flex-col justify-center">
+      <div className="w-full lg:w-1/2 px-5 py-8 sm:p-8 flex flex-col justify-center">
         <div className="max-w-md mx-auto w-full">
-          <h1 className="text-3xl font-bold mb-2">Create a free account</h1>
+
+          {/* Mobile brand header */}
+          <div className="lg:hidden flex items-center gap-3 mb-6">
+            <img src="/logo.png" alt="Jeevan Chakra" className="w-10 h-10 object-contain" />
+            <div>
+              <p className="font-black text-lg bg-gradient-to-r from-green-600 via-blue-600 to-orange-500 bg-clip-text text-transparent leading-none">Jeevan Chakra</p>
+              <p className="text-[10px] text-gray-400 uppercase tracking-widest">Healthcare Platform</p>
+            </div>
+          </div>
+
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2">Create a free account</h1>
           <p className="text-gray-500 mb-6">Sign up as a</p>
 
           {/* Toggle User Type */}

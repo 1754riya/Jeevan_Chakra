@@ -157,7 +157,7 @@ export default function AIAssistant() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900 pt-16">
-      <div className="max-w-3xl mx-auto px-4 py-8 h-screen flex flex-col" style={{ maxHeight: 'calc(100vh - 64px)' }}>
+      <div className="max-w-3xl mx-auto px-4 pt-4 pb-20 md:py-8 md:pb-8 flex flex-col" style={{ height: 'calc(100dvh - 4rem)' }}>
 
         {/* Header */}
         <div className="flex items-center justify-between mb-4 shrink-0">

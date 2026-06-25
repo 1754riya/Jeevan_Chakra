@@ -61,7 +61,7 @@ export default function ChatWidget() {
 
       {/* Chat window */}
       {open && (
-        <div className="w-80 h-[440px] bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-700 flex flex-col overflow-hidden animate-slide-up">
+        <div className="w-[min(20rem,calc(100vw-2rem))] h-[min(440px,calc(100dvh-10rem))] bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-700 flex flex-col overflow-hidden animate-slide-up">
 
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-600 to-cyan-600 px-4 py-3 flex items-center justify-between shrink-0">

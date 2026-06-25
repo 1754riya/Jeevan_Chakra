@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { doc, getDoc, updateDoc } from '@firebase/firestore';
 import { db, auth } from '../firebase/config';
 import { Check, X } from 'lucide-react';
+import { createNotification } from '../utils/notifications';
 
 export function PatientSidebar({ isOpen, onClose, patientId, appointmentId }) {
   const [patient, setPatient] = useState(null);
@@ -58,6 +59,18 @@ export function PatientSidebar({ isOpen, onClose, patientId, appointmentId }) {
         completedAt: new Date(),
         updatedAt: new Date()
       });
+
+      // Notify patient
+      if (patientId) {
+        const currentUser = auth.currentUser;
+        const doctorName = currentUser?.displayName || currentUser?.email || 'your doctor';
+        await createNotification({
+          userId: patientId,
+          message: `Your appointment with Dr. ${doctorName} has been marked as completed. Please rate your visit!`,
+          type: 'appointment_completed',
+          appointmentId,
+        });
+      }
 
       // Update patient vaccinations if changed
       if (Object.keys(vaccinations).length > 0) {

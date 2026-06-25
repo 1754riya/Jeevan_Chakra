@@ -1,192 +1,198 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { collection, query, where, getDocs, doc, setDoc } from '@firebase/firestore';
-import { auth, db } from '../firebase/config';
+import { collection, query, where, onSnapshot, doc, setDoc } from '@firebase/firestore';
+import { db } from '../firebase/config';
 import { BookingTabs } from '../doc-dashboard/Tabs';
 import AppointmentCard from '../components/AppointmentCard';
-import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../AuthContext';
-import { signOut } from '@firebase/auth';
-import { PatientSidebar } from '../doc-dashboard/PatientSidebar';
+import { useToast } from '../components/Toast';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Calendar, Plus, Activity, Package, Gamepad2, Bot, FileText, PhoneCall, Search as SearchIcon } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import PageTransition from '../components/PageTransition';
 
-function Dashboard() {
-  const [activeTab, setActiveTab] = useState('Upcoming');
+const QUICK_LINKS = [
+  { to: '/bmi-tracker',  icon: Activity, label: 'BMI Tracker', color: 'from-blue-500 to-indigo-600',  desc: 'Track health' },
+  { to: '/book-medicine', icon: Package, label: 'Pharmacy',    color: 'from-emerald-500 to-teal-600', desc: 'Order meds' },
+  { to: '/game',         icon: Gamepad2, label: 'Health Games', color: 'from-purple-500 to-pink-600', desc: 'Learn & play' },
+  { to: '/ai-assistant', icon: Bot,      label: 'AI Assistant', color: 'from-orange-500 to-amber-600', desc: 'Ask anything' },
+  { to: '/medical-records', icon: FileText, label: 'Records',  color: 'from-rose-500 to-red-600',    desc: 'My health data' },
+  { to: '/search',       icon: SearchIcon, label: 'Find Doctors', color: 'from-sky-500 to-cyan-600', desc: 'Book a visit' },
+  { to: '/emergency',    icon: PhoneCall,label: 'Emergency',   color: 'from-red-600 to-rose-700',     desc: 'Get help now' },
+];
+
+const Skeleton = ({ className = '' }) => (
+  <div className={`animate-pulse bg-gray-200 dark:bg-slate-700 rounded-2xl ${className}`} />
+);
+
+function Appointments() {
+  const [activeTab, setActiveTab]       = useState('Upcoming');
   const [appointments, setAppointments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const navigate = useNavigate();
-  const { currentUser } = useContext(AuthContext);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [selectedPatientId, setSelectedPatientId] = useState(null);
-  const [selectedAppointmentId, setSelectedAppointmentId] = useState(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [loading, setLoading]           = useState(true);
+  const [error, setError]               = useState(null);
+  const { currentUser }                 = useContext(AuthContext);
+  const navigate                        = useNavigate();
+  const toast                           = useToast();
 
   useEffect(() => {
-    const fetchAppointments = async () => {
-      try {
-        const user = auth.currentUser;
-        if (!user) return;
+    if (!currentUser) return;
 
-        const appointmentsRef = collection(db, 'appointments');
-        const q = query(appointmentsRef, where('patientId', '==', currentUser.uid));
-        const querySnapshot = await getDocs(q);
-        
-        const fetchedAppointments = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          startTime: doc.data().date.toDate(),
-        }));
+    const q = query(
+      collection(db, 'appointments'),
+      where('patientId', '==', currentUser.uid)
+    );
 
-        setAppointments(fetchedAppointments);
-      } catch (err) {
-        console.error('Error fetching appointments:', err);
-        setError('Failed to load appointments');
-      } finally {
-        setLoading(false);
-      }
-    };
+    const unsub = onSnapshot(q, snap => {
+      const data = snap.docs.map(d => ({
+        id: d.id,
+        ...d.data(),
+        startTime: d.data().date?.toDate?.() ?? new Date(d.data().date),
+      }));
+      setAppointments(data);
+      setLoading(false);
+    }, err => {
+      setError('Failed to load appointments. Please try again.');
+      setLoading(false);
+    });
 
-    fetchAppointments();
+    return () => unsub();
   }, [currentUser]);
 
-  const filteredAppointments = appointments.filter(appointment => {
-    const now = new Date();
-    const appointmentDate = new Date(appointment.startTime);
-
-    switch (activeTab) {
-      case 'Upcoming':
-        return appointmentDate > now && appointment.status !== 'cancelled';
-      case 'Past':
-        return appointmentDate < now || appointment.status === 'completed';
-      case 'Cancelled':
-        return appointment.status === 'cancelled';
-      default:
-        return true;
-    }
-  });
-
-  const handleEdit = async (booking, action) => {
-    if (action === 'view') {
-      setSelectedPatientId(booking.patientId);
-      setSelectedAppointmentId(booking.id);
-      setIsSidebarOpen(true);
-    }
-    // Handle other actions if necessary
-    console.log('Edit action:', action, booking);
-  };
+  const now = new Date();
+  const filtered = appointments.filter(a => {
+    if (activeTab === 'Upcoming')  return a.startTime > now && a.status !== 'cancelled';
+    if (activeTab === 'Past')      return a.startTime <= now || a.status === 'completed';
+    if (activeTab === 'Cancelled') return a.status === 'cancelled';
+    return true;
+  }).sort((a, b) =>
+    activeTab === 'Upcoming' ? a.startTime - b.startTime : b.startTime - a.startTime
+  );
 
   const handleCancelAppointment = async (appointmentId) => {
     try {
-      const appointmentRef = doc(db, 'appointments', appointmentId);
-      await setDoc(appointmentRef, {
+      await setDoc(doc(db, 'appointments', appointmentId), {
         status: 'cancelled',
-        updatedAt: new Date()
+        updatedAt: new Date(),
       }, { merge: true });
-
-      // Update local state to reflect the change
-      setAppointments(prevAppointments => 
-        prevAppointments.map(apt => 
-          apt.id === appointmentId 
-            ? { ...apt, status: 'cancelled' }
-            : apt
-        )
-      );
-    } catch (error) {
-      console.error('Error cancelling appointment:', error);
-      alert('Failed to cancel appointment');
+      toast.success('Appointment cancelled', 'Your appointment has been cancelled.');
+    } catch {
+      toast.error('Failed to cancel', 'Please try again or contact support.');
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      navigate('/login');
-    } catch (err) {
-      console.error('Logout failed:', err);
-    }
-  };
-
-  // Helper function to get user initials
-  const getUserInitials = (email) => {
-    if (!email) return 'U';
-    return email.charAt(0).toUpperCase();
-  };
-
-  if (loading) {
-    return <div className="p-6 text-center">Loading appointments...</div>;
-  }
-
-  if (error) {
-    return <div className="p-6 text-center text-red-500">{error}</div>;
-  }
+  if (error) return (
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex items-center justify-center">
+      <div className="text-center px-4">
+        <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Calendar className="w-8 h-8 text-red-400" />
+        </div>
+        <p className="font-medium text-gray-700 dark:text-gray-300 mb-1">{error}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-3 text-blue-500 hover:underline text-sm font-medium"
+        >
+          Retry
+        </button>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="max-w-3xl mx-auto p-6 text-left">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">My Appointments</h1>
-        
-        {currentUser ? (
-          <div className="relative">
-            <div
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="flex items-center cursor-pointer"
-            >
-              {currentUser.photoURL ? (
-                <img
-                  src={currentUser.photoURL}
-                  alt="Profile"
-                  className="w-10 h-10 rounded-full"
-                />
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white text-lg">
-                  {getUserInitials(currentUser.email)}
-                </div>
-              )}
-            </div>
-            {menuOpen && (
-              <div className="absolute right-0 mt-2 w-32 bg-white border rounded-lg shadow-lg">
-                <button
-                  onClick={handleLogout}
-                  className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-100"
-                >
-                  Logout
-                </button>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="text-gray-600">Loading...</div>
-        )}
-      </div>
-      
-      <BookingTabs
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-      />
-      
-      {filteredAppointments.length === 0 ? (
-        <p className="text-gray-500 text-center py-8">
-          No {activeTab.toLowerCase()} appointments found
-        </p>
-      ) : (
-        <div className="space-y-4">
-          {filteredAppointments.map((appointment) => (
-            <AppointmentCard
-              key={appointment.id}
-              appointment={appointment}
-              handleCancelAppointment={handleCancelAppointment}
-            />
-          ))}
-        </div>
-      )}
+    <PageTransition>
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-900 pt-16 pb-24 md:pb-8">
+        <div className="max-w-2xl mx-auto px-4 py-8">
 
-      <PatientSidebar
-        isOpen={isSidebarOpen}
-        onClose={() => setIsSidebarOpen(false)}
-        patientId={selectedPatientId}
-        appointmentId={selectedAppointmentId}
-      />
-    </div>
+          {/* Quick Access */}
+          <div className="mb-8">
+            <p className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-3">Quick Access</p>
+            <div className="grid grid-cols-4 gap-2.5">
+              {QUICK_LINKS.map(item => (
+                <Link key={item.to} to={item.to}
+                  className="flex flex-col items-center gap-2 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 py-4 px-2 hover:shadow-md transition-shadow group">
+                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center group-hover:scale-105 transition-transform`}>
+                    <item.icon className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 text-center leading-tight">{item.label}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Appointments</h1>
+              <p className="text-gray-500 dark:text-gray-400 text-sm mt-0.5">
+                {loading ? '...' : `${appointments.length} total appointment${appointments.length !== 1 ? 's' : ''}`}
+              </p>
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => navigate('/search')}
+              className="flex items-center gap-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl font-medium transition-colors shadow-md shadow-blue-200 dark:shadow-none"
+            >
+              <Plus className="w-4 h-4" /> Book New
+            </motion.button>
+          </div>
+
+          <BookingTabs activeTab={activeTab} onTabChange={setActiveTab} />
+
+          {loading ? (
+            <div className="space-y-4 mt-4">
+              {[1, 2, 3].map(i => <Skeleton key={i} className="h-36" />)}
+            </div>
+          ) : filtered.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center py-20"
+            >
+              <div className="w-20 h-20 bg-gray-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Calendar className="w-10 h-10 text-gray-300 dark:text-slate-600" />
+              </div>
+              <p className="font-semibold text-gray-600 dark:text-gray-300">
+                No {activeTab.toLowerCase()} appointments
+              </p>
+              <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
+                {activeTab === 'Upcoming' && 'Find a doctor and schedule your first visit.'}
+                {activeTab === 'Past'     && 'Your past appointments will appear here.'}
+                {activeTab === 'Cancelled'&& 'Cancelled appointments will appear here.'}
+              </p>
+              {activeTab === 'Upcoming' && (
+                <motion.button
+                  whileHover={{ scale: 1.04 }}
+                  onClick={() => navigate('/search')}
+                  className="mt-5 inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-colors"
+                >
+                  Find a Doctor <Plus className="w-4 h-4" />
+                </motion.button>
+              )}
+            </motion.div>
+          ) : (
+            <AnimatePresence mode="popLayout">
+              <div className="space-y-4 mt-4">
+                {filtered.map((a, i) => (
+                  <motion.div
+                    key={a.id}
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                    transition={{ delay: i * 0.04 }}
+                  >
+                    <AppointmentCard
+                      appointment={a}
+                      handleCancelAppointment={handleCancelAppointment}
+                      doctorId={a.doctorId}
+                    />
+                  </motion.div>
+                ))}
+              </div>
+            </AnimatePresence>
+          )}
+        </div>
+      </div>
+    </PageTransition>
   );
 }
 
-export default Dashboard;
+export default Appointments;

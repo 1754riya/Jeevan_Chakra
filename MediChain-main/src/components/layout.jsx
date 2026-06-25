@@ -1,16 +1,21 @@
-// src/components/Layout.jsx
-import React from 'react';
+import React, { useContext } from 'react';
 import { Outlet } from 'react-router-dom';
-import { Navbar } from './Navbar'; // Ensure Navbar is correctly imported
+import { Navbar } from './Navbar';
+import BottomNav from './BottomNav';
+import ChatWidget from './ChatWidget';
+import { AuthContext } from '../AuthContext';
 
 const Layout = () => {
+  const { currentUser } = useContext(AuthContext);
+
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white dark:bg-slate-900 transition-colors">
       <Navbar />
-      {/* Main Content */}
-      <div className="pt-0"> {/* Adjust padding to match Navbar height */}
+      <div className="pt-0">
         <Outlet />
       </div>
+      {currentUser && <BottomNav />}
+      <ChatWidget />
     </div>
   );
 };

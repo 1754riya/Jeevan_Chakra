@@ -1,220 +1,369 @@
-import { useState, useContext, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { FiHelpCircle, FiUser, FiMenu, FiX } from 'react-icons/fi';
+import { useState, useContext, useEffect, useRef } from 'react';
+import { Link, NavLink } from 'react-router-dom';
+import { FiMenu, FiX } from 'react-icons/fi';
+import { Sun, Moon, ChevronDown } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { AuthContext } from '../AuthContext';
 import { signOut } from '@firebase/auth';
-import { auth, db } from '../firebase/config';
-import { doc, getDoc } from '@firebase/firestore';
+import { auth } from '../firebase/config';
+import NotificationCenter from './NotificationCenter';
+
+const TOOLS = [
+  { to: '/game',          label: '🎮 Health Games' },
+  { to: '/bmi-tracker',   label: '📊 BMI Tracker'  },
+  { to: '/book-medicine', label: '💊 Pharmacy'      },
+  { to: '/ai-assistant',  label: '🤖 AI Assistant'  },
+  { to: '/help',          label: '🤝 NGOs'          },
+  { to: '/faq',           label: '❓ FAQ'           },
+];
+
+function useDarkMode() {
+  const [dark, setDark] = useState(() => {
+    const saved = localStorage.getItem('theme');
+    if (saved) return saved === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', dark);
+    localStorage.setItem('theme', dark ? 'dark' : 'light');
+  }, [dark]);
+  return [dark, () => setDark(v => !v)];
+}
 
 export function Navbar() {
-  const { currentUser } = useContext(AuthContext);
-  const [userType, setUserType] = useState(null);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { currentUser, userType } = useContext(AuthContext);
+  const [mobileOpen, setMobileOpen]   = useState(false);
+  const [avatarOpen, setAvatarOpen]   = useState(false);
+  const [toolsOpen, setToolsOpen]     = useState(false);
+  const [scrolled, setScrolled]       = useState(false);
+  const [dark, toggleDark]            = useDarkMode();
+  const toolsRef = useRef(null);
 
-  const getInitial = () => {
-    if (currentUser && currentUser.email) {
-      return currentUser.email.charAt(0).toUpperCase();
-    }
-    return '';
-  };
+  const initial = currentUser?.email?.charAt(0).toUpperCase() ?? '?';
 
+  /* shadow on scroll */
   useEffect(() => {
-    const fetchUserType = async () => {
-      if (currentUser) {
-        try {
-          // Check in patients collection
-          const patientDoc = await getDoc(doc(db, 'patients', currentUser.uid));
-          if (patientDoc.exists()) {
-            setUserType('patient');
-            return;
-          }
-          
-          // Check in doctors collection
-          const doctorDoc = await getDoc(doc(db, 'doctors', currentUser.uid));
-          if (doctorDoc.exists()) {
-            setUserType('doctor');
-            return;
-          }
-        } catch (error) {
-          console.error('Error fetching user type:', error);
-        }
-      }
-    };
-
-    fetchUserType();
-  }, [currentUser]);
+    const onScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      setMenuOpen(false);
-      setUserType(null);
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
+    await signOut(auth);
+    setAvatarOpen(false);
+    setMobileOpen(false);
   };
 
-  const UserAvatar = () => {
-    const [imageError, setImageError] = useState(false);
+  /* close dropdowns on outside click */
+  useEffect(() => {
+    const h = () => setAvatarOpen(false);
+    if (avatarOpen) document.addEventListener('click', h);
+    return () => document.removeEventListener('click', h);
+  }, [avatarOpen]);
 
-    return (
-    <div className="relative">
-      <button
-        onClick={() => setMenuOpen(!menuOpen)}
-        className="flex items-center justify-center w-10 h-10 rounded-full focus:outline-none overflow-hidden"
-      >
-        {currentUser?.photoURL && !imageError ? (
-          <img 
-            src={currentUser.photoURL}
-            alt="Profile"
-            className="w-full h-full object-cover"
-            onError={() => setImageError(true)}
-          />
-        ) : (
-          <div className="w-full h-full bg-blue-500 flex items-center justify-center text-white">
-            {getInitial()}
-          </div>
-        )}
-      </button>
-      {menuOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-lg z-50">
-          <div className="p-2 border-b">
-            <p className="text-sm font-medium text-gray-900">
-              {currentUser?.displayName || currentUser?.email}
-            </p>
-            <p className="text-xs text-gray-500">
-              {userType?.charAt(0).toUpperCase() + userType?.slice(1)}
-            </p>
-          </div>
-          {userType === 'patient' && (
-            <Link
-              to="/appointments"
-              className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
-              onClick={() => setMenuOpen(false)}
-            >
-              My Appointments
-            </Link>
-          )}
-          <Link 
-            to="/settings"
-            className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
-            onClick={() => setMenuOpen(false)}
-          >
-            Settings
-          </Link>
-          <button
-            onClick={handleLogout}
-            className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"
-          >
-            Sign Out
-          </button>
-        </div>
-      )}
-    </div>
-  )};
+  useEffect(() => {
+    const h = (e) => { if (toolsRef.current && !toolsRef.current.contains(e.target)) setToolsOpen(false); };
+    if (toolsOpen) document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, [toolsOpen]);
+
+  const navLinkClass = ({ isActive }) =>
+    `relative text-sm font-semibold transition-all duration-200 pb-0.5 group ${
+      isActive
+        ? 'text-blue-600 dark:text-blue-400'
+        : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+    }`;
+
+  const dropdownVariants = {
+    hidden:  { opacity: 0, y: -6, scale: 0.97 },
+    visible: { opacity: 1, y: 0,  scale: 1, transition: { duration: 0.18, ease: 'easeOut' } },
+    exit:    { opacity: 0, y: -4, scale: 0.97, transition: { duration: 0.12 } },
+  };
 
   return (
-    <nav className="bg-white border-b border-gray-200 z-50 fixed w-full top-0 left-0">
+    <nav className={`fixed w-full top-0 left-0 z-50 transition-all duration-300 ${
+      scrolled
+        ? 'bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl shadow-lg shadow-gray-200/60 dark:shadow-slate-950/60 border-b border-gray-200/60 dark:border-slate-700/60'
+        : 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-200/40 dark:border-slate-700/40'
+    }`}>
       <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link to="/" className="flex items-center">
-            <span className="text-2xl font-bold text-blue-600">MediChain</span>
+        <div className="flex items-center justify-between h-[68px]">
+
+          {/* ── Logo + Brand ── */}
+          <Link to="/" className="flex items-center gap-3 shrink-0 group">
+            <motion.div
+              whileHover={{ scale: 1.08, rotate: 3 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 18 }}
+              className="relative"
+            >
+              <img
+                src="/logo.png"
+                alt="Jeevan Chakra"
+                className="w-11 h-11 object-contain drop-shadow-sm group-hover:drop-shadow-[0_0_8px_rgba(34,197,94,0.5)] transition-all duration-300"
+              />
+            </motion.div>
+            <div className="flex flex-col leading-none">
+              <span className="text-[19px] font-black tracking-tight bg-gradient-to-r from-green-600 via-blue-600 to-orange-500 bg-clip-text text-transparent drop-shadow-sm">
+                Jeevan Chakra
+              </span>
+              <span className="text-[9px] font-semibold tracking-[0.18em] text-gray-400 dark:text-slate-500 uppercase">
+                Healthcare Platform
+              </span>
+            </div>
           </Link>
 
-          {/* Mobile menu button */}
-          <div className="md:hidden">
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="text-gray-600 hover:text-gray-900 focus:outline-none"
-            >
-              {isMobileMenuOpen ? (
-                <FiX className="h-6 w-6" />
-              ) : (
-                <FiMenu className="h-6 w-6" />
-              )}
-            </button>
+          {/* ── Desktop nav ── */}
+          <div className="hidden md:flex items-center gap-1 ml-6">
+            {[
+              { to: '/', label: 'Home', end: true },
+              { to: '/search', label: 'Find Doctors' },
+              ...(currentUser && userType === 'patient' ? [{ to: '/appointments', label: 'Appointments' }] : []),
+              { to: '/emergency', label: 'Emergency' },
+            ].map(({ to, label, end }) => (
+              <NavLink key={to} to={to} end={end} className={({ isActive }) =>
+                `relative px-3 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                  isActive
+                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100/80 dark:hover:bg-slate-800/80'
+                }`
+              }>
+                {label}
+              </NavLink>
+            ))}
+
+            {/* Tools dropdown */}
+            <div className="relative" ref={toolsRef}>
+              <button
+                onClick={() => setToolsOpen(v => !v)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                  toolsOpen
+                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100/80 dark:hover:bg-slate-800/80'
+                }`}
+              >
+                Tools
+                <motion.div animate={{ rotate: toolsOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </motion.div>
+              </button>
+
+              <AnimatePresence>
+                {toolsOpen && (
+                  <motion.div
+                    variants={dropdownVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="exit"
+                    className="absolute top-full left-0 mt-2 w-52 bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl border border-gray-200/60 dark:border-slate-700/60 rounded-2xl shadow-2xl shadow-gray-200/50 dark:shadow-slate-950/50 z-50 overflow-hidden"
+                  >
+                    <div className="p-1.5">
+                      {TOOLS.map((t, i) => (
+                        <motion.div
+                          key={t.to}
+                          initial={{ opacity: 0, x: -8 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: i * 0.04 }}
+                        >
+                          <Link
+                            to={t.to}
+                            onClick={() => setToolsOpen(false)}
+                            className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 rounded-xl transition-all duration-150 font-medium"
+                          >
+                            {t.label}
+                          </Link>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center justify-between flex-1 ml-10">
-            <div className="space-x-4">
-              <Link to="/" className="text-gray-600 hover:text-gray-900">
-                Find Doctors
-              </Link>
-              <Link to="/help" className="text-gray-600 hover:text-gray-900">
-                Connect with NGOs
-              </Link>
-            </div>
+          {/* ── Right side ── */}
+          <div className="hidden md:flex items-center gap-2">
+            <button
+              onClick={toggleDark}
+              className="p-2 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-all duration-200 hover:scale-105"
+              aria-label="Toggle dark mode"
+            >
+              <AnimatePresence mode="wait">
+                {dark
+                  ? <motion.div key="sun" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.2 }}>
+                      <Sun className="w-5 h-5 text-yellow-400" />
+                    </motion.div>
+                  : <motion.div key="moon" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.2 }}>
+                      <Moon className="w-5 h-5" />
+                    </motion.div>
+                }
+              </AnimatePresence>
+            </button>
 
-            {/* Right Side - User Avatar or Auth Links */}
-            <div className="flex items-center space-x-4 relative">
-              {currentUser ? (
-                <UserAvatar />
-              ) : (
-                <>
-                  <Link to="/login" className="text-gray-600 hover:text-gray-900">
-                    Log in
-                  </Link>
-                  <Link
-                    to="/signup"
-                    className="bg-yellow-400 text-gray-900 px-4 py-2 rounded-lg font-medium hover:bg-yellow-500 transition-colors"
+            {currentUser ? (
+              <>
+                <NotificationCenter />
+
+                <div className="relative" onClick={e => e.stopPropagation()}>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => setAvatarOpen(v => !v)}
+                    className="flex items-center justify-center w-9 h-9 rounded-full overflow-hidden ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-slate-900 focus:outline-none shadow-lg shadow-blue-200/50 dark:shadow-none"
                   >
-                    Sign up
+                    {currentUser.photoURL
+                      ? <img src={currentUser.photoURL} alt="Avatar" className="w-full h-full object-cover" />
+                      : <div className="w-full h-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm">{initial}</div>
+                    }
+                  </motion.button>
+
+                  <AnimatePresence>
+                    {avatarOpen && (
+                      <motion.div
+                        variants={dropdownVariants}
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
+                        className="absolute right-0 mt-2 w-56 bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl border border-gray-200/60 dark:border-slate-700/60 rounded-2xl shadow-2xl z-50 overflow-hidden"
+                      >
+                        <div className="px-4 py-3.5 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 border-b border-gray-100 dark:border-slate-700">
+                          <p className="text-sm font-bold text-gray-900 dark:text-white truncate">
+                            {currentUser.displayName || currentUser.email}
+                          </p>
+                          <p className="text-xs text-blue-500 capitalize font-semibold mt-0.5">{userType ?? 'User'}</p>
+                        </div>
+
+                        <div className="p-1.5">
+                          {userType === 'doctor' && (
+                            <Link to="/dashboard" onClick={() => setAvatarOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-colors font-medium">
+                              📊 My Dashboard
+                            </Link>
+                          )}
+                          {userType === 'patient' && (
+                            <>
+                              <Link to="/appointments" onClick={() => setAvatarOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-colors font-medium">
+                                📅 Appointments
+                              </Link>
+                              <Link to="/medical-records" onClick={() => setAvatarOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-colors font-medium">
+                                🩺 Medical Records
+                              </Link>
+                            </>
+                          )}
+                          {TOOLS.map(t => (
+                            <Link key={t.to} to={t.to} onClick={() => setAvatarOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-colors font-medium">
+                              {t.label}
+                            </Link>
+                          ))}
+                          <Link to="/settings" onClick={() => setAvatarOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-colors font-medium">
+                            ⚙️ Settings
+                          </Link>
+                          <div className="mt-1 pt-1 border-t border-gray-100 dark:border-slate-700">
+                            <button onClick={handleLogout} className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors font-medium">
+                              🚪 Sign Out
+                            </button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="px-4 py-2 text-sm font-semibold text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors rounded-xl hover:bg-gray-100 dark:hover:bg-slate-800">
+                  Log in
+                </Link>
+                <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+                  <Link to="/signup" className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-bold px-5 py-2.5 rounded-xl transition-all shadow-lg shadow-blue-200/50 dark:shadow-none">
+                    Get Started
                   </Link>
-                </>
-              )}
-            </div>
+                </motion.div>
+              </>
+            )}
+          </div>
+
+          {/* ── Mobile hamburger ── */}
+          <div className="md:hidden flex items-center gap-1.5">
+            <button onClick={toggleDark} className="p-2 text-gray-500 dark:text-gray-400 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800">
+              {dark ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5" />}
+            </button>
+            {currentUser && <NotificationCenter />}
+            <button
+              onClick={() => setMobileOpen(v => !v)}
+              className="p-2 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              <AnimatePresence mode="wait">
+                {mobileOpen
+                  ? <motion.div key="x" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.15 }}><FiX className="w-6 h-6" /></motion.div>
+                  : <motion.div key="menu" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.15 }}><FiMenu className="w-6 h-6" /></motion.div>
+                }
+              </AnimatePresence>
+            </button>
           </div>
         </div>
 
-        {/* Mobile Navigation */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden">
-            <div className="px-2 pt-2 pb-3 space-y-1">
-              <Link
-                to="/"
-                className="block px-3 py-2 text-gray-600 hover:text-gray-900"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Find Doctors
-              </Link>
-              <Link
-                to="/help"
-                className="block px-3 py-2 text-gray-600 hover:text-gray-900"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Connect with NGOs
-              </Link>
-              {currentUser && userType === 'patient' ? (
-                <button
-                  onClick={handleLogout}
-                  className="block w-full text-left px-3 py-2 text-red-600 hover:bg-red-100"
-                >
-                  Sign Out
-                </button>
-              ) : (
-                <>
-                  <Link
-                    to="/login"
-                    className="block px-3 py-2 text-gray-600 hover:text-gray-900"
-                    onClick={() => setIsMobileMenuOpen(false)}
+        {/* ── Mobile menu ── */}
+        <AnimatePresence>
+          {mobileOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.25, ease: 'easeInOut' }}
+              className="md:hidden overflow-hidden border-t border-gray-100 dark:border-slate-700"
+            >
+              <div className="py-3 space-y-0.5">
+                {[
+                  { to: '/', label: '🏠 Home', end: true },
+                  { to: '/search', label: '🔍 Find Doctors' },
+                  { to: '/emergency', label: '🚨 Emergency' },
+                  ...TOOLS,
+                  { to: '/about', label: 'ℹ️ About' },
+                  ...(currentUser && userType === 'patient' ? [
+                    { to: '/appointments',    label: '📅 Appointments'    },
+                    { to: '/medical-records', label: '🩺 Medical Records' },
+                  ] : []),
+                  ...(currentUser && userType === 'doctor' ? [{ to: '/dashboard', label: '📊 Dashboard' }] : []),
+                  ...(currentUser ? [{ to: '/settings', label: '⚙️ Settings' }] : []),
+                ].map(({ to, label, end }, i) => (
+                  <motion.div
+                    key={to}
+                    initial={{ opacity: 0, x: -16 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.03 }}
                   >
-                    Log in
-                  </Link>
-                  <Link
-                    to="/signup"
-                    className="block px-3 py-2 bg-yellow-400 text-gray-900 rounded-lg font-medium hover:bg-yellow-500"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    Sign up
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-        )}
+                    <NavLink
+                      to={to}
+                      end={end}
+                      onClick={() => setMobileOpen(false)}
+                      className={({ isActive }) =>
+                        `block px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                          isActive
+                            ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800'
+                        }`
+                      }
+                    >{label}</NavLink>
+                  </motion.div>
+                ))}
+
+                {currentUser ? (
+                  <button onClick={handleLogout} className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                    🚪 Sign Out
+                  </button>
+                ) : (
+                  <div className="flex gap-2 pt-2 px-1 pb-1">
+                    <Link to="/login" onClick={() => setMobileOpen(false)} className="flex-1 text-center py-2.5 border border-gray-200 dark:border-slate-600 rounded-xl text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                      Log in
+                    </Link>
+                    <Link to="/signup" onClick={() => setMobileOpen(false)} className="flex-1 text-center py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-200/50">
+                      Get Started
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </nav>
   );

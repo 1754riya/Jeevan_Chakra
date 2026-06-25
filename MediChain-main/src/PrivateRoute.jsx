@@ -4,11 +4,5 @@ import { AuthContext } from './AuthContext';
 
 export default function PrivateRoute({ children }) {
   const { currentUser } = useContext(AuthContext);
-
-  if (currentUser === undefined) {
-    
-    return null;
-  }
-
-  return currentUser ? children : <Navigate to="/login" />;
+  return currentUser ? children : <Navigate to="/login" replace />;
 }

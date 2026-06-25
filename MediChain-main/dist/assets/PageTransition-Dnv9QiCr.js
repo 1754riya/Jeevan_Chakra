@@ -1,1 +1,0 @@
-import{j as a,K as n}from"./index-BBvKWPr2.js";const o={initial:{opacity:0,y:14},animate:{opacity:1,y:0},exit:{opacity:0,y:-8}};function s({children:i,className:t=""}){return a.jsx(n.div,{variants:o,initial:"initial",animate:"animate",exit:"exit",transition:{duration:.22,ease:[.25,.46,.45,.94]},className:t,children:i})}export{s as P};

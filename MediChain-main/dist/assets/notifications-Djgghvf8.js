@@ -1,1 +1,0 @@
-import{a3 as i,i as r,b as n}from"./index-BBvKWPr2.js";async function l({userId:a,message:t,type:o,appointmentId:e=null}){try{await i(r(n,"notifications"),{userId:a,message:t,type:o,appointmentId:e,read:!1,createdAt:new Date})}catch(c){console.error("Failed to create notification:",c)}}export{l as c};

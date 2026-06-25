@@ -53,16 +53,6 @@ Throughout the development of **Jeevan Chakra**, I explored:
 
 ---
 
-## 👥 **Meet the Team Behind Jeevan Chakra** 🎉  
-
-💪 A **huge shoutout** to my amazing teammates for their dedication and teamwork:  
-
-👨‍💻 **Akshat Shrivastava** – Backend & AI Chatbot Development  
-👩‍💻 **Aarushi Chaddha** – Frontend UI/UX & Mental Health Module  
-👩‍💻 **Riya Mehta** – Doctor Dashboard & Appointments  
-👨‍💻 **Pranav Chaturvedi** – Database & API Integration  
-👩‍💻 **Aashi Raghuvanshi** – Medicine Booking & Reminders  
-
 🎯 **This journey was an incredible learning experience, and we are excited to take Jeevan Chakra further to make a real-world impact!** 🌍💙  
 
 

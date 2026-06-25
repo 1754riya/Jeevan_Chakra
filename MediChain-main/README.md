@@ -31,18 +31,20 @@ A full-stack, portfolio-grade healthcare platform connecting patients with docto
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | React 18 + Vite 6 |
-| Routing | React Router v7 |
-| Styling | Tailwind CSS (dark mode, animations) |
-| Animations | Framer Motion |
-| Auth | Firebase Authentication (Email + Google OAuth) |
-| Database | Cloud Firestore (real-time, NoSQL) |
-| State | React Context API + onSnapshot listeners |
-| Icons | lucide-react + react-icons |
-| Calendar | react-calendar |
-| Charts | Pure SVG (no external chart library) |
+| Layer | Technology | Why |
+|-------|-----------|-----|
+| Frontend | React 18 + Vite 6 | Component-based UI with Concurrent Mode; Vite provides near-instant HMR and automatic code splitting — 10–100x faster than CRA |
+| Routing | React Router v7 | Nested routes enable the Layout pattern (shared Navbar/BottomNav); PrivateRoute HOC guards protected pages |
+| Styling | Tailwind CSS v3 | Utility-first with built-in dark mode (`class` strategy) and responsive prefixes; zero unused CSS in production |
+| Animations | Framer Motion v12 | Declarative spring physics, `AnimatePresence` for exit animations, and `useMotionValue` for 60fps cursor updates without React re-renders |
+| Auth | Firebase Authentication | Handles JWT sessions, token refresh, Google OAuth, and email/password — no custom backend needed |
+| Database | Cloud Firestore | Real-time `onSnapshot` listeners, cursor-based pagination with `startAfter`, and flexible NoSQL schema |
+| State Management | React Context API | Lightweight global state for auth (`AuthContext`) and toasts (`ToastContext`); local state via `useState` + `onSnapshot` |
+| Icons | lucide-react + react-icons | lucide-react is individually tree-shaken per icon; only used icons are bundled |
+| Date Handling | date-fns v4 | Tree-shakeable imports (~2KB per function vs Moment.js's 67KB full bundle) |
+| Calendar | react-calendar | Fully controlled date picker for appointment booking |
+| Charts | Pure SVG | Custom `DonutChart` + `BarChart` in SVG — saves ~80KB vs Chart.js or Recharts |
+| Deployment | Vercel | Zero-config Vite deployment, global CDN, and automatic CI/CD on every `git push` |
 
 ## Firestore Collections
 
@@ -84,50 +86,56 @@ src/
 ## Getting Started
 
 ### Prerequisites
+
 - Node.js 18+
+- npm 9+
 - A Firebase project with Firestore and Authentication enabled
 
-### Installation
+### 1. Clone and Install
 
 ```bash
-git clone <repo-url>
-cd MediChain-main
+git clone https://github.com/1754riya/Jeevan_Chakra.git
+cd Jeevan_Chakra/MediChain-main
 npm install
 ```
 
-### Firebase Setup
+### 2. Firebase Setup
 
-1. Create a project at [Firebase Console](https://console.firebase.google.com)
-2. Enable **Firestore Database** and **Authentication** (Email/Password + Google)
-3. Copy your Firebase config and create `src/firebase/config.js`:
+1. Go to [Firebase Console](https://console.firebase.google.com) and create a new project
+2. Enable **Authentication** → Sign-in methods → turn on **Email/Password** and **Google**
+3. Enable **Firestore Database** → Start in test mode
+4. Go to **Project Settings** → Your apps → Add a Web app → copy the config
 
-```js
-import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+### 3. Environment Variables
 
-const firebaseConfig = {
-  apiKey: "...",
-  authDomain: "...",
-  projectId: "...",
-  storageBucket: "...",
-  messagingSenderId: "...",
-  appId: "..."
-};
+Create a `.env.local` file in the `MediChain-main/` directory:
 
-const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
-export const auth = getAuth(app);
-export const googleProvider = new GoogleAuthProvider();
+```env
+VITE_FIREBASE_API_KEY=your_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_project.firebasestorage.app
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
+VITE_FIREBASE_MEASUREMENT_ID=G-XXXXXXXXXX
 ```
 
-### Run
+> **Note:** `.env.local` is git-ignored. Never commit your Firebase credentials.
+
+### 4. Run Locally
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173).
+Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+### 5. Build for Production
+
+```bash
+npm run build       # outputs to dist/
+npm run preview     # preview the production build locally
+```
 
 ## Key Pages
 
@@ -155,6 +163,13 @@ Open [http://localhost:5173](http://localhost:5173).
 - `overflow-x: hidden` on html/body; safe area insets for iOS
 - React Calendar fully overridden for mobile viewport fit
 - Sticky "Book Appointment" CTA on doctor profile for mobile
+
+## Team
+
+| Name | GitHub |
+|------|--------|
+| Riya Mehta | [@1754riya](https://github.com/1754riya) |
+| Pranav Chaturvedi | [@pranavchaturvedi](https://github.com/pranavchaturvedi) |
 
 ## License
 
